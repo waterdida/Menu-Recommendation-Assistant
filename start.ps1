@@ -88,7 +88,7 @@ $EnvFile = Join-Path $Root ".env"
 $EnvExample = Join-Path $Root ".env.example"
 if (-not (Test-Path $EnvFile) -and (Test-Path $EnvExample)) {
     Copy-Item $EnvExample $EnvFile
-    Write-Warn ".env was created from .env.example. Please fill MOONSHOT_API_KEY if you need LLM answers."
+    Write-Warn ".env was created from .env.example. Please fill DEEPSEEK_API_KEY before starting."
 } elseif (Test-Path $EnvFile) {
     Write-Ok ".env exists."
 } else {
@@ -113,24 +113,25 @@ if ($InstallDeps) {
     $Python = Get-PythonCommand
     Invoke-Expression "$Python -m pip install -r `"$Root\requirements.txt`""
 } else {
-    Write-Step "Skipping Python dependency install"
-    Write-Ok "Use .\start.ps1 -InstallDeps if this is the first run."
+    Write-Step "Checking Python virtual environment"
+    $VenvPython = Join-Path $Root ".venv\Scripts\python.exe"
+    if (-not (Test-Path $VenvPython)) {
+        Write-Warn ".venv not found — creating and installing dependencies (first run only)..."
+        $Python = Get-PythonCommand
+        Invoke-Expression "$Python -m venv `"$Root\.venv`""
+        Invoke-Expression "`"$VenvPython`" -m pip install --upgrade pip -q"
+        Invoke-Expression "`"$VenvPython`" -m pip install -r `"$Root\requirements.txt`""
+        Write-Ok "Dependencies installed."
+    } else {
+        Write-Ok ".venv exists, skipping install. Use .\start.ps1 -InstallDeps to force reinstall."
+    }
 }
 
 if (-not $NoFrontend) {
-    Write-Step "Preparing frontend dependencies"
-    if (-not (Test-Command "npm")) {
-        throw "npm was not found. Install Node.js or run with -NoFrontend."
-    }
-
-    if ($InstallDeps -or -not (Test-Path (Join-Path $FrontendDir "node_modules"))) {
-        Push-Location $FrontendDir
-        npm install
-        Pop-Location
-    } else {
-        Write-Ok "frontend/node_modules exists."
-    }
+    Write-Step "Skipping Vite frontend (using built-in static server at port 8000)"
+    $NoFrontend = $true
 }
+
 
 Write-Step "Starting backend"
 if (Test-Port 8000) {
@@ -179,5 +180,5 @@ Write-Host ""
 Write-Host "Tips:"
 Write-Host "  First run:   .\start.ps1 -InstallDeps"
 Write-Host "  No Docker:   .\start.ps1 -SkipDocker"
-Write-Host "  Backend only: .\start.ps1 -NoFrontend"
+Write-Host "  Backend only: .\start.ps1 -NoFrontend  (default, frontend served at :8000)"
 Write-Host "  Stop app:    .\stop.ps1"
