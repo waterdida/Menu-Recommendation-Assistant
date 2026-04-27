@@ -1,0 +1,41 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Logs
+*.log
+web_server.log
+web_server.err.log
+logs/
+
+# Docker persisted data
+volumes/
+data/neo4j_data/
+data/neo4j_logs/
+data/neo4j_plugins/
+
+# Frontend
+frontend/node_modules/
+frontend/.npm-cache/
+frontend/dist/
+
+# Non-core local data-generation workspace
+agent*/
+agent(代码系ai生成)/
+
+# Editors and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
