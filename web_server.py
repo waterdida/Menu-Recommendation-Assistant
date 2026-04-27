@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
-WEB_DIR = BASE_DIR / "web"
 FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
 
 rag_system: Any | None = None
@@ -236,11 +235,12 @@ class RAGWebHandler(SimpleHTTPRequestHandler):
         self.wfile.flush()
 
     def serve_frontend(self, request_path: str):
-        root = WEB_DIR if WEB_DIR.exists() else FRONTEND_DIST_DIR
-        relative_path = request_path.lstrip("/") or "index.html"
+        root = FRONTEND_DIST_DIR
+        if not root.exists():
+            self.send_error(503, "frontend/dist not found. Run `cd frontend && npm run build` first.")
+            return
 
-        if relative_path.startswith("static/"):
-            relative_path = relative_path.removeprefix("static/")
+        relative_path = request_path.lstrip("/") or "index.html"
 
         target = root / relative_path
         if not target.exists() or target.is_dir():
@@ -250,7 +250,7 @@ class RAGWebHandler(SimpleHTTPRequestHandler):
 
     def send_file(self, path: Path, root: Path | None = None):
         try:
-            root = root or WEB_DIR
+            root = root or FRONTEND_DIST_DIR
             resolved = path.resolve()
             if not str(resolved).startswith(str(root.resolve())) or not resolved.is_file():
                 self.send_error(404, "Not found")

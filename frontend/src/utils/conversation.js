@@ -1,29 +1,43 @@
-import { STORAGE_KEY, welcomeMessage } from "../constants/chat";
+import { LEGACY_STORAGE_KEYS, STORAGE_KEY } from "../constants/chat";
 
 export function createId() {
   return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
 }
 
-export function createConversation() {
+export function createConversation(title = "新对话") {
   const now = Date.now();
   return {
     id: createId(),
     sessionId: createId(),
-    title: "新对话",
+    title,
     createdAt: now,
     updatedAt: now,
-    messages: [{ id: createId(), ...welcomeMessage }],
+    messages: [],
+  };
+}
+
+export function normalizeConversation(conversation) {
+  return {
+    id: conversation.id || createId(),
+    sessionId: conversation.sessionId || conversation.id || createId(),
+    title: conversation.title || getConversationTitle(conversation.messages || []),
+    createdAt: conversation.createdAt || Date.now(),
+    updatedAt: conversation.updatedAt || conversation.createdAt || Date.now(),
+    messages: Array.isArray(conversation.messages) ? conversation.messages : [],
   };
 }
 
 export function loadConversations() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    if (Array.isArray(saved) && saved.length) return saved;
-  } catch {
-    localStorage.removeItem(STORAGE_KEY);
+  const keys = [STORAGE_KEY, ...LEGACY_STORAGE_KEYS];
+  for (const key of keys) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) || "[]");
+      if (Array.isArray(saved) && saved.length) return saved.map(normalizeConversation);
+    } catch {
+      localStorage.removeItem(key);
+    }
   }
-  return [createConversation()];
+  return [];
 }
 
 export function saveConversations(conversations) {
@@ -31,7 +45,7 @@ export function saveConversations(conversations) {
 }
 
 export function getConversationTitle(messages) {
-  const firstQuestion = messages.find((message) => message.role === "user")?.content;
+  const firstQuestion = messages.find((message) => message.role === "user")?.content?.trim();
   if (!firstQuestion) return "新对话";
-  return firstQuestion.length > 18 ? `${firstQuestion.slice(0, 18)}...` : firstQuestion;
+  return firstQuestion.length > 24 ? `${firstQuestion.slice(0, 24)}...` : firstQuestion;
 }

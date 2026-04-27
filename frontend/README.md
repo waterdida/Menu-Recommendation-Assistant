@@ -1,18 +1,22 @@
-﻿# Frontend
+# 前端说明
 
-This is the Vite + React frontend for Menu Recommendation Assistant.
+这是菜单推荐助手的 `Vite + React` 前端工程。
 
-During development, Vite proxies `/api` requests to the backend at `http://127.0.0.1:8000`.
+开发模式下，Vite 会把 `/api` 请求代理到后端：
 
-## Development
+```text
+http://127.0.0.1:8000
+```
 
-Start the backend from the project root:
+## 本地开发
+
+先在项目根目录启动后端：
 
 ```powershell
 python web_server.py
 ```
 
-Start the frontend in another terminal:
+再在另一个终端启动前端开发服务器：
 
 ```powershell
 cd frontend
@@ -20,9 +24,13 @@ npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`.
+浏览器访问：
 
-## Build
+```text
+http://127.0.0.1:5173
+```
+
+## 构建
 
 ```powershell
 cd frontend
@@ -30,8 +38,18 @@ npm install
 npm run build
 ```
 
-After building, start `web_server.py` from the project root and open `http://127.0.0.1:8000`. The backend serves `frontend/dist` automatically when it exists.
+构建完成后，在项目根目录启动：
 
-## Source Layout
+```powershell
+python web_server.py
+```
 
-See `src/README.md` for the frontend component, hook, and utility structure.
+后端会直接提供 `frontend/dist`，访问：
+
+```text
+http://127.0.0.1:8000
+```
+
+## 源码结构
+
+前端组件、hooks 和工具函数的拆分说明见 [src/README.md](./src/README.md)。

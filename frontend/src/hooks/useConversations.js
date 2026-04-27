@@ -43,8 +43,8 @@ export function useConversations() {
     );
   }, []);
 
-  const startNewConversation = useCallback(() => {
-    const conversation = createConversation();
+  const startNewConversation = useCallback((providedConversation) => {
+    const conversation = providedConversation || createConversation();
     setConversations((items) => [conversation, ...items]);
     setActiveId(conversation.id);
     return conversation;
@@ -54,9 +54,8 @@ export function useConversations() {
     setConversations((items) => {
       const remaining = items.filter((item) => item.id !== conversationId);
       if (!remaining.length) {
-        const conversation = createConversation();
-        setActiveId(conversation.id);
-        return [conversation];
+        setActiveId(undefined);
+        return [];
       }
 
       setActiveId((currentId) => (currentId === conversationId ? remaining[0].id : currentId));

@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 load_dotenv()
@@ -17,7 +16,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
-WEB_DIR = BASE_DIR / "web"
+FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
 
 rag_system: Any | None = None
 rag_lock = asyncio.Lock()
@@ -94,15 +93,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if WEB_DIR.exists():
-    app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
-
-
 @app.get("/")
 async def index():
-    index_file = WEB_DIR / "index.html"
+    index_file = FRONTEND_DIST_DIR / "index.html"
     if not index_file.exists():
-        raise HTTPException(status_code=404, detail="web/index.html not found")
+        raise HTTPException(status_code=404, detail="frontend/dist/index.html not found")
     return FileResponse(index_file)
 
 
@@ -139,3 +134,26 @@ async def ask(request: AskRequest):
         elapsed_seconds=round(time.perf_counter() - start, 2),
         route=_analysis_to_dict(analysis),
     )
+
+
+@app.get("/{file_path:path}")
+async def frontend_asset(file_path: str):
+    if file_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    if not FRONTEND_DIST_DIR.exists():
+        raise HTTPException(status_code=404, detail="frontend/dist not found")
+
+    target = (FRONTEND_DIST_DIR / file_path).resolve()
+    root = FRONTEND_DIST_DIR.resolve()
+    if not str(target).startswith(str(root)):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    if target.is_file():
+        return FileResponse(target)
+
+    index_file = FRONTEND_DIST_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+
+    raise HTTPException(status_code=404, detail="frontend/dist/index.html not found")

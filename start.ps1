@@ -132,6 +132,11 @@ if (-not $NoFrontend) {
     $NoFrontend = $true
 }
 
+$FrontendDistDir = Join-Path $FrontendDir "dist"
+if (-not (Test-Path $FrontendDistDir)) {
+    Write-Warn "frontend/dist not found. Run `cd frontend; npm.cmd run build` before using the built-in server."
+}
+
 
 Write-Step "Starting backend"
 if (Test-Port 8000) {

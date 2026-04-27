@@ -1,25 +1,24 @@
 # 前端源码结构
 
-这个前端是一个 Vite + React 的聊天界面。为了方便上线维护，代码按职责拆成几个小目录。
+这个前端是一个 `Vite + React` 的聊天界面，按职责拆分成几个小目录，方便继续维护。
 
 ## 目录说明
 
 - `App.jsx`
-  - 页面总入口，只负责组合状态、请求后端、分发事件。
+  - 页面总入口，负责会话状态、请求后端和分发事件。
 - `components/`
-  - `Sidebar.jsx`：左侧新对话、历史对话、右键菜单入口。
-  - `ChatPanel.jsx`：右侧消息列表、建议卡片、输入框。
+  - `Sidebar.jsx`：左侧新对话、历史会话、右键菜单入口。
+  - `ChatPanel.jsx`：右侧消息列表、建议问题、输入框。
   - `Message.jsx`：单条消息气泡和头像。
   - `ContextMenu.jsx`：历史会话右键菜单。
 - `hooks/`
   - `useConversations.js`：会话增删改查、本地存储、防抖保存。
-  - `useVirtualList.js`：消息虚拟列表，只渲染可视区附近的消息。
 - `utils/`
   - `conversation.js`：创建会话、生成标题、读写本地存储。
   - `sse.js`：解析后端 SSE 流式响应。
   - `exportPdf.js`：把会话记录导出到浏览器打印窗口，用“另存为 PDF”保存。
 - `constants/`
-  - `chat.js`：建议问题、欢迎语、本地存储 key。
+  - `chat.js`：建议问题、本地存储 key、策略标签。
 - `styles.css`
   - 全局布局和组件样式。
 
@@ -34,7 +33,6 @@
 
 ## 性能点
 
-- 会话保存做了 250ms 防抖，避免模型流式输出时每个 token 都同步写 `localStorage`。
-- 消息列表使用 `useVirtualList`，历史消息很多时只渲染可视区附近的 DOM。
+- 会话保存做了 `250ms` 防抖，避免流式输出时每个 token 都写一次 `localStorage`。
+- 消息列表使用 `react-window` 的 `List` 做虚拟滚动，只渲染可视区附近的消息。
 - `Message` 用 `memo` 包裹，减少无关重渲染。
-- CSS 使用 `content-visibility` 和 `contain` 降低长页面布局压力。

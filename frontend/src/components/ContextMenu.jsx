@@ -5,16 +5,17 @@ function ContextMenu({ menu, onDelete, onExport }) {
 
   return (
     <div
-      className="context-menu"
+      className="ctx-menu"
       style={{ left: menu.x, top: menu.y }}
       role="menu"
       onClick={(event) => event.stopPropagation()}
     >
-      <button type="button" role="menuitem" onClick={onExport}>
-        导出为 PDF
+      <button className="ctx-item" type="button" role="menuitem" onClick={onExport}>
+        📄 导出 PDF
       </button>
-      <button className="danger" type="button" role="menuitem" onClick={onDelete}>
-        删除会话
+      <div className="ctx-divider" />
+      <button className="ctx-item danger" type="button" role="menuitem" onClick={onDelete}>
+        🗑 删除会话
       </button>
     </div>
   );

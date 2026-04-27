@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ChatPanel from "./components/ChatPanel";
 import Sidebar from "./components/Sidebar";
 import { examples } from "./constants/chat";
 import { useConversations } from "./hooks/useConversations";
-import { createId } from "./utils/conversation";
+import { createConversation, createId } from "./utils/conversation";
 import { exportConversationAsPdf } from "./utils/exportPdf";
 import { parseEventStream } from "./utils/sse";
 
@@ -19,19 +19,12 @@ export default function App() {
   const [question, setQuestion] = useState("");
   const [asking, setAsking] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
-  const messagesRef = useRef(null);
 
   const activeConversation = useMemo(
-    () => conversations.find((conversation) => conversation.id === activeId) || conversations[0],
+    () => conversations.find((conversation) => conversation.id === activeId) || null,
     [activeId, conversations]
   );
   const messages = activeConversation?.messages || [];
-  const showSuggestions = !messages.some((message) => message.role === "user");
-
-  useEffect(() => {
-    const el = messagesRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [messages]);
 
   useEffect(() => {
     function closeMenu() {
@@ -64,8 +57,8 @@ export default function App() {
   function handleContextMenu(event, conversationId) {
     event.preventDefault();
     setContextMenu({
-      x: Math.min(event.clientX, window.innerWidth - 160),
-      y: Math.min(event.clientY, window.innerHeight - 92),
+      x: Math.min(event.clientX, window.innerWidth - 170),
+      y: Math.min(event.clientY, window.innerHeight - 96),
       conversationId,
     });
   }
@@ -83,20 +76,26 @@ export default function App() {
 
   async function ask(text) {
     const trimmed = text.trim();
-    if (!trimmed || asking || !activeConversation) return;
+    if (!trimmed || asking) return;
 
-    const conversationId = activeConversation.id;
-    const sessionId = activeConversation.sessionId;
+    let conversation = activeConversation;
+    if (!conversation) {
+      conversation = createConversation(trimmed.slice(0, 24));
+      startNewConversation(conversation);
+    }
+
+    const conversationId = conversation.id;
+    const sessionId = conversation.sessionId;
     const assistantId = createId();
 
     setQuestion("");
     setAsking(true);
-    patchConversation(conversationId, (conversation) => ({
-      ...conversation,
+    patchConversation(conversationId, (item) => ({
+      ...item,
       messages: [
-        ...conversation.messages,
+        ...item.messages,
         { id: createId(), role: "user", content: trimmed },
-        { id: assistantId, role: "assistant", content: "", status: "正在连接后端..." },
+        { id: assistantId, role: "assistant", content: "", status: "正在分析问题..." },
       ],
     }));
 
@@ -115,7 +114,7 @@ export default function App() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       let buffer = "";
-      let route = "";
+      let routeStrategy = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -131,7 +130,7 @@ export default function App() {
           }
 
           if (item.event === "route") {
-            route = item.data?.strategy ? `策略：${item.data.strategy}` : "";
+            routeStrategy = item.data?.strategy || "";
           }
 
           if (item.event === "token") {
@@ -142,13 +141,13 @@ export default function App() {
           }
 
           if (item.event === "done") {
-            const elapsed = item.data?.elapsed_seconds;
-            const cacheLabel = item.data?.from_cache ? "缓存命中" : "";
             updateAssistant(conversationId, assistantId, () => ({
               status: "",
-              meta: [route, cacheLabel, elapsed ? `耗时：${elapsed}s` : ""]
-                .filter(Boolean)
-                .join(" · "),
+              meta: {
+                strategy: routeStrategy,
+                elapsed: item.data?.elapsed_seconds ?? null,
+                fromCache: Boolean(item.data?.from_cache),
+              },
             }));
           }
 
@@ -185,11 +184,10 @@ export default function App() {
         asking={asking}
         examples={examples}
         messages={messages}
-        messagesRef={messagesRef}
         onAsk={ask}
         question={question}
         setQuestion={setQuestion}
-        showSuggestions={showSuggestions}
+        showSuggestions={messages.length === 0}
       />
     </main>
   );
