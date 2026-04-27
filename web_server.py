@@ -236,7 +236,7 @@ class RAGWebHandler(SimpleHTTPRequestHandler):
         self.wfile.flush()
 
     def serve_frontend(self, request_path: str):
-        root = FRONTEND_DIST_DIR if FRONTEND_DIST_DIR.exists() else WEB_DIR
+        root = WEB_DIR if WEB_DIR.exists() else FRONTEND_DIST_DIR
         relative_path = request_path.lstrip("/") or "index.html"
 
         if relative_path.startswith("static/"):

@@ -15,23 +15,30 @@ logger = logging.getLogger(__name__)
 class GenerationIntegrationModule:
     """生成集成模块 - 负责答案生成"""
 
-    def __init__(self, model_name: str = "kimi-k2-0711-preview", temperature: float = 0.1, max_tokens: int = 2048):
+    def __init__(self, model_name: str = "deepseek-chat", temperature: float = 0.2, max_tokens: int = 1024):
         """
         初始化生成集成模块
         """
         self.model_name = model_name
         self.temperature = temperature
         self.max_tokens = max_tokens
-        
-        # 初始化OpenAI客户端（使用Moonshot API）
-        api_key = os.getenv("MOONSHOT_API_KEY")
-        if not api_key:
-            raise ValueError("请设置 MOONSHOT_API_KEY 环境变量")
-        
-        self.client = OpenAI(
-            api_key=api_key,
-            base_url=os.getenv("MOONSHOT_API_BASE_URL", "https://api.moonshot.cn/v1")
-        )
+
+        # 优先使用 DeepSeek，回退到 Moonshot
+        deepseek_key = os.getenv("DEEPSEEK_API_KEY")
+        moonshot_key = os.getenv("MOONSHOT_API_KEY")
+
+        if deepseek_key:
+            self.client = OpenAI(
+                api_key=deepseek_key,
+                base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
+            )
+        elif moonshot_key:
+            self.client = OpenAI(
+                api_key=moonshot_key,
+                base_url=os.getenv("MOONSHOT_API_BASE_URL", "https://api.moonshot.cn/v1")
+            )
+        else:
+            raise ValueError("请设置 DEEPSEEK_API_KEY 或 MOONSHOT_API_KEY 环境变量")
 
         logger.info(f"生成模块初始化完成，模型: {model_name}")
 

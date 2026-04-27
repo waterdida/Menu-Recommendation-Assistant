@@ -33,15 +33,19 @@ class GraphRAGConfig:
 
     # Models
     embedding_model: str = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-zh-v1.5")
-    llm_model: str = os.getenv("LLM_MODEL", "kimi-k2.6")
+    llm_model: str = os.getenv("LLM_MODEL", "deepseek-chat")
+
+    # DeepSeek
+    deepseek_api_key: str = os.getenv("DEEPSEEK_API_KEY", "")
+    deepseek_base_url: str = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
 
     # Retrieval
     top_k: int = _get_int("TOP_K", 5)
     max_graph_depth: int = _get_int("MAX_GRAPH_DEPTH", 2)
 
     # Generation
-    temperature: float = _get_float("TEMPERATURE", 1.0)
-    max_tokens: int = _get_int("MAX_TOKENS", 4096)
+    temperature: float = _get_float("TEMPERATURE", 0.2)
+    max_tokens: int = _get_int("MAX_TOKENS", 1024)
 
     # Chunking
     chunk_size: int = _get_int("CHUNK_SIZE", 500)
@@ -63,6 +67,8 @@ class GraphRAGConfig:
             "milvus_dimension": self.milvus_dimension,
             "embedding_model": self.embedding_model,
             "llm_model": self.llm_model,
+            "deepseek_api_key": self.deepseek_api_key,
+            "deepseek_base_url": self.deepseek_base_url,
             "top_k": self.top_k,
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
