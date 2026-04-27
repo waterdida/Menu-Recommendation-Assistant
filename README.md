@@ -12,14 +12,13 @@
 - 结合关键词检索、向量检索和图谱检索的混合召回能力。
 - 支持传统混合检索、图谱检索、组合检索之间的智能路由。
 - 前端使用 React 构建，支持会话历史、本地存储、流式输出和 PDF 导出。
-- 提供 Windows 一键启动脚本，方便本地开发与演示。
 
 ## 环境要求
 
 - Docker Desktop，用于启动 Neo4j 和 Milvus。
 - Python 3.10 及以上。
 - Node.js 18 及以上，以及 npm。
-- 可兼容 Moonshot 的大模型 API Key。
+- 可兼容 DeepSeek 的大模型 API Key。
 
 ## 快速开始
 
@@ -134,8 +133,8 @@ http://127.0.0.1:8000
 
 大部分配置来自 `.env`，常用变量包括：
 
-- `MOONSHOT_API_KEY`：调用大模型所必需。
-- `MOONSHOT_API_BASE_URL`：默认值为 `https://api.moonshot.cn/v1`。
+- `DeepSeek_API_KEY`：调用大模型所必需。
+- `DeepSeek_API_BASE_URL`：默认值为 `https://api.deepseek.com/v1`。
 - `NEO4J_URI`、`NEO4J_USER`、`NEO4J_PASSWORD`、`NEO4J_DATABASE`。
 - `MILVUS_HOST`、`MILVUS_PORT`、`MILVUS_COLLECTION_NAME`。
 - `EMBEDDING_MODEL`、`LLM_MODEL`。
