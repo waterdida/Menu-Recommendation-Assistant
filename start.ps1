@@ -77,6 +77,18 @@ function Get-PythonCommand {
     throw "Python was not found. Install Python or set the PYTHON environment variable to python.exe."
 }
 
+function Get-NpmCommand {
+    if (Test-Command "npm.cmd") {
+        return "npm.cmd"
+    }
+
+    if (Test-Command "npm") {
+        return "npm"
+    }
+
+    throw "npm was not found. Install Node.js 18+ and make sure npm is available in PATH."
+}
+
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 Set-Location $Root
 
@@ -88,7 +100,7 @@ $EnvFile = Join-Path $Root ".env"
 $EnvExample = Join-Path $Root ".env.example"
 if (-not (Test-Path $EnvFile) -and (Test-Path $EnvExample)) {
     Copy-Item $EnvExample $EnvFile
-    Write-Warn ".env was created from .env.example. Please fill DEEPSEEK_API_KEY before starting."
+    Write-Warn ".env was created from .env.example. Please fill MOONSHOT_API_KEY before starting."
 } elseif (Test-Path $EnvFile) {
     Write-Ok ".env exists."
 } else {
@@ -133,8 +145,29 @@ if (-not $NoFrontend) {
 }
 
 $FrontendDistDir = Join-Path $FrontendDir "dist"
+$FrontendNodeModulesDir = Join-Path $FrontendDir "node_modules"
+$Npm = Get-NpmCommand
+
+if ($InstallDeps -or -not (Test-Path $FrontendNodeModulesDir)) {
+    Write-Step "Installing frontend dependencies"
+    Push-Location $FrontendDir
+    try {
+        Invoke-Expression "$Npm install"
+        Write-Ok "Frontend dependencies installed."
+    } finally {
+        Pop-Location
+    }
+}
+
 if (-not (Test-Path $FrontendDistDir)) {
-    Write-Warn "frontend/dist not found. Run `cd frontend; npm.cmd run build` before using the built-in server."
+    Write-Step "Building frontend"
+    Push-Location $FrontendDir
+    try {
+        Invoke-Expression "$Npm run build"
+        Write-Ok "Frontend build completed."
+    } finally {
+        Pop-Location
+    }
 }
 
 

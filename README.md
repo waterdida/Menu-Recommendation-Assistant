@@ -49,7 +49,8 @@ copy .env.example .env
 - 如果缺少 `.env`，则根据 `.env.example` 创建。
 - 启动根目录 `docker-compose.yml` 中的 Milvus、etcd、MinIO。
 - 启动 `data/docker-compose.yml` 中的 Neo4j。
-- 在传入 `-InstallDeps` 时安装 Python 依赖。
+- 在传入 `-InstallDeps` 时安装 Python 依赖和前端依赖。
+- 如果缺少 `frontend/dist`，会自动构建前端。
 - 启动后端服务 `http://127.0.0.1:8000`。
 - 通过后端直接提供 `frontend/dist` 的构建产物。
 
@@ -146,8 +147,8 @@ http://127.0.0.1:8000
 - `data/cypher/`：Neo4j 导入脚本与图谱 CSV 数据。
 - `frontend/`：Vite + React 前端。
 - `web_server.py`：轻量后端与前端静态资源服务。
-- `start.ps1`、`start.bat`：一键启动脚本。
-- `stop.ps1`、`stop.bat`：停止本地前后端进程。
+- `start.ps1`：一键启动脚本。
+- `stop.ps1`：停止本地前后端进程。
 - `docs/`：架构与部署相关说明。
 
 ## 使用提醒
