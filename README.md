@@ -19,7 +19,7 @@
 
 - Windows PowerShell。
 - Docker Desktop，用于启动 Neo4j、Milvus、etcd 和 MinIO。
-- Python 3.10 及以上，用于创建项目本地虚拟环境 `.venv`。
+- Python 3.10 及以上，用于创建项目本地虚拟环境 `.venv`。安装 Python 时请勾选 `Add python.exe to PATH`。
 - Node.js 18 及以上，以及 npm，用于安装和构建前端。
 - 大模型 API Key。项目配置同时保留了 Moonshot/OpenAI 兼容接口和 DeepSeek 配置，请按 `.env.example` 填写你实际使用的 Key。
 
@@ -79,6 +79,8 @@ start.bat
 - 启动 `data/docker-compose.yml` 中的 Neo4j。
 - 启动后端服务 `http://127.0.0.1:8000`。
 - 通过后端直接提供 `frontend/dist` 的构建产物。
+
+如果这里提示 `Python 3.10+ was not found`，说明电脑还没有可用的系统 Python。请先从 [Python Windows 下载页](https://www.python.org/downloads/windows/) 安装 Python 3.10 或更高版本，安装时勾选 `Add python.exe to PATH`，然后重新双击 `start.bat`。
 
 后续日常启动仍然双击 `start.bat` 或执行：
 

@@ -99,11 +99,24 @@ function Wait-Port($Port, $Name, $TimeoutSeconds) {
     return $false
 }
 
+function Test-PythonExecutable($PythonCommand) {
+    if (-not $PythonCommand) {
+        return $false
+    }
+
+    try {
+        & $PythonCommand -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)" *> $null
+        return $LASTEXITCODE -eq 0
+    } catch {
+        return $false
+    }
+}
+
 function Get-PythonCommand {
     if ($CondaEnv) {
         if ($env:CONDA_DEFAULT_ENV -eq $CondaEnv -and $env:CONDA_PREFIX) {
             $activeCondaPython = Join-Path $env:CONDA_PREFIX "python.exe"
-            if (Test-Path $activeCondaPython) {
+            if ((Test-Path $activeCondaPython) -and (Test-PythonExecutable $activeCondaPython)) {
                 return $activeCondaPython
             }
         }
@@ -119,7 +132,7 @@ function Get-PythonCommand {
             if ($line -match "^\s*$([regex]::Escape($CondaEnv))\s+(.+?)\s*$") {
                 $condaEnvPath = $matches[1].Trim()
                 $condaEnvPython = Join-Path $condaEnvPath "python.exe"
-                if (Test-Path $condaEnvPython) {
+                if ((Test-Path $condaEnvPython) -and (Test-PythonExecutable $condaEnvPython)) {
                     return $condaEnvPython
                 }
             }
@@ -130,29 +143,59 @@ function Get-PythonCommand {
 
     if ($env:CONDA_PREFIX) {
         $activeCondaPython = Join-Path $env:CONDA_PREFIX "python.exe"
-        if (Test-Path $activeCondaPython) {
+        if ((Test-Path $activeCondaPython) -and (Test-PythonExecutable $activeCondaPython)) {
             return $activeCondaPython
         }
     }
 
     $repoVenvPython = Join-Path $Root ".venv\Scripts\python.exe"
-    if (Test-Path $repoVenvPython) {
+    if ((Test-Path $repoVenvPython) -and (Test-PythonExecutable $repoVenvPython)) {
         return $repoVenvPython
     }
 
-    if ($env:PYTHON -and (Test-Path $env:PYTHON)) {
+    if ($env:PYTHON -and (Test-Path $env:PYTHON) -and (Test-PythonExecutable $env:PYTHON)) {
         return $env:PYTHON
     }
 
-    if (Test-Command "python") {
-        return "python"
+    if ((Test-Command "python") -and (Test-PythonExecutable "python")) {
+        return (Get-Command "python").Source
     }
 
-    if (Test-Command "py") {
-        return "py"
+    if ((Test-Command "py") -and (Test-PythonExecutable "py")) {
+        return (Get-Command "py").Source
     }
 
-    throw "Python was not found. Install Python or set the PYTHON environment variable to python.exe."
+    $commonPythonPaths = @(
+        (Join-Path $env:LOCALAPPDATA "Programs\Python\Python312\python.exe"),
+        (Join-Path $env:LOCALAPPDATA "Programs\Python\Python311\python.exe"),
+        (Join-Path $env:LOCALAPPDATA "Programs\Python\Python310\python.exe"),
+        (Join-Path $env:ProgramFiles "Python312\python.exe"),
+        (Join-Path $env:ProgramFiles "Python311\python.exe"),
+        (Join-Path $env:ProgramFiles "Python310\python.exe"),
+        (Join-Path ${env:ProgramFiles(x86)} "Python312\python.exe"),
+        (Join-Path ${env:ProgramFiles(x86)} "Python311\python.exe"),
+        (Join-Path ${env:ProgramFiles(x86)} "Python310\python.exe")
+    )
+
+    foreach ($candidate in $commonPythonPaths) {
+        if ($candidate -and (Test-Path $candidate) -and (Test-PythonExecutable $candidate)) {
+            return $candidate
+        }
+    }
+
+    $message = @"
+Python 3.10+ was not found.
+
+Please install Python first, then run start.bat again:
+  1. Download Python 3.10+ from https://www.python.org/downloads/windows/
+  2. During installation, check "Add python.exe to PATH"
+  3. Close this window and double-click start.bat again
+
+If Python is already installed, set the PYTHON environment variable to the full path of python.exe.
+Example:
+  setx PYTHON "C:\Users\YourName\AppData\Local\Programs\Python\Python312\python.exe"
+"@
+    throw $message
 }
 
 function Get-NpmCommand {
