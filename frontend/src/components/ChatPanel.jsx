@@ -12,9 +12,11 @@ function SendIcon() {
 }
 
 function MessageRow({ index, messages, style }) {
+  const message = messages[index];
+
   return (
-    <div className="message-row" style={style}>
-      <Message message={messages[index]} />
+    <div className={`message-row ${message.role}`} style={style}>
+      <Message message={message} />
     </div>
   );
 }
@@ -23,21 +25,36 @@ function ChatPanel({ asking, examples, messages, onAsk, question, setQuestion, s
   const listRef = useListRef();
   const textareaRef = useRef(null);
   const atBottomRef = useRef(true);
+  const forceStickToBottomRef = useRef(false);
+  const rowHeightKey = messages[0]?.id || "empty";
   const rowHeight = useDynamicRowHeight({
     defaultRowHeight: 140,
-    key: messages.length,
+    key: rowHeightKey,
   });
 
   useEffect(() => {
-    if (!messages.length || !atBottomRef.current) return;
+    if (!messages.length || (!atBottomRef.current && !forceStickToBottomRef.current)) return;
 
-    requestAnimationFrame(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  function scrollToBottom() {
+    const scroll = () => {
       listRef.current?.scrollToRow({
         align: "end",
+        behavior: "instant",
         index: messages.length - 1,
       });
+    };
+
+    requestAnimationFrame(() => {
+      scroll();
+      requestAnimationFrame(() => {
+        scroll();
+        forceStickToBottomRef.current = false;
+      });
     });
-  }, [listRef, messages, rowHeight]);
+  }
 
   function handleScroll(event) {
     const element = event.currentTarget;
@@ -49,6 +66,13 @@ function ChatPanel({ asking, examples, messages, onAsk, question, setQuestion, s
     textarea.style.height = "auto";
     textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
     setQuestion(textarea.value);
+  }
+
+  function submitQuestion(event) {
+    event.preventDefault();
+    forceStickToBottomRef.current = true;
+    atBottomRef.current = true;
+    onAsk(question);
   }
 
   return (
@@ -96,10 +120,7 @@ function ChatPanel({ asking, examples, messages, onAsk, question, setQuestion, s
 
         <form
           className="composer"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onAsk(question);
-          }}
+          onSubmit={submitQuestion}
         >
           <textarea
             ref={textareaRef}
@@ -111,6 +132,8 @@ function ChatPanel({ asking, examples, messages, onAsk, question, setQuestion, s
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
+                forceStickToBottomRef.current = true;
+                atBottomRef.current = true;
                 onAsk(question);
               }
             }}

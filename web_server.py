@@ -2,6 +2,7 @@ import json
 import mimetypes
 import threading
 import time
+import traceback
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
 
 rag_system: Any | None = None
+rag_init_error: str | None = None
 rag_init_lock = threading.Lock()
 rag_request_lock = threading.Lock()
 response_cache: dict[tuple[str, str], dict[str, Any]] = {}
@@ -24,7 +26,7 @@ CACHE_VERSION = "stream-v3"
 
 
 def get_rag_system() -> Any:
-    global rag_system
+    global rag_init_error, rag_system
 
     if rag_system and rag_system.system_ready:
         return rag_system
@@ -35,14 +37,25 @@ def get_rag_system() -> Any:
 
         from main import AdvancedGraphRAGSystem
 
-        print("正在初始化 RAG 系统...")
+        print("正在初始化 RAG 系统...", flush=True)
         start = time.perf_counter()
         system = AdvancedGraphRAGSystem()
         system.initialize_system()
         system.build_knowledge_base()
         rag_system = system
-        print(f"RAG 系统初始化完成，耗时 {time.perf_counter() - start:.2f}s")
+        rag_init_error = None
+        print(f"RAG 系统初始化完成，耗时 {time.perf_counter() - start:.2f}s", flush=True)
         return rag_system
+
+
+def warm_up_rag_system():
+    global rag_init_error
+
+    try:
+        get_rag_system()
+    except Exception as exc:
+        rag_init_error = str(exc)
+        print(f"RAG 系统后台初始化失败: {exc}", flush=True)
 
 
 def analysis_to_dict(analysis: Any) -> dict[str, Any] | None:
@@ -84,7 +97,13 @@ class RAGWebHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         path = urlparse(self.path).path
         if path == "/api/health":
-            self.send_json({"ready": bool(rag_system and rag_system.system_ready)})
+            self.send_json(
+                {
+                    "ready": bool(rag_system and rag_system.system_ready),
+                    "initializing": not bool(rag_system and rag_system.system_ready) and rag_init_error is None,
+                    "error": rag_init_error,
+                }
+            )
             return
 
         self.serve_frontend(path)
@@ -279,16 +298,17 @@ def main():
     host = "127.0.0.1"
     port = 8000
 
-    # Warm up at startup so the first browser question does not pay the init cost.
-    get_rag_system()
-
     server = ThreadingHTTPServer((host, port), RAGWebHandler)
-    print(f"网页服务已启动：http://{host}:{port}")
-    print("按 Ctrl+C 停止服务。")
+    print(f"网页服务已启动：http://{host}:{port}", flush=True)
+    threading.Thread(target=warm_up_rag_system, name="rag-warmup").start()
+    print("按 Ctrl+C 停止服务。", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
+    except Exception:
+        traceback.print_exc()
+        raise
     finally:
         if rag_system:
             rag_system._cleanup()

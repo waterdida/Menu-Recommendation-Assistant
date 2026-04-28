@@ -287,7 +287,16 @@ button {
 }
 
 .message-row {
+  display: flex;
   padding: 28px clamp(16px, 5vw, 96px) 0;
+}
+
+.message-row.user {
+  justify-content: flex-end;
+}
+
+.message-row.assistant {
+  justify-content: flex-start;
 }
 
 .message {
@@ -298,12 +307,7 @@ button {
 }
 
 .message.user {
-  align-self: flex-end;
   flex-direction: row-reverse;
-}
-
-.message.assistant {
-  align-self: flex-start;
 }
 
 .avatar {
@@ -335,6 +339,10 @@ button {
   flex-direction: column;
   gap: 5px;
   min-width: 0;
+}
+
+.message.user .bubble-wrap {
+  align-items: flex-end;
 }
 
 .bubble {

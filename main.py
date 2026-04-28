@@ -115,7 +115,7 @@ class AdvancedGraphRAGSystem:
                 config=self.config
             )
             
-            print("✅ 高级图RAG系统初始化完成！")
+            print("[OK] 高级图RAG系统初始化完成！")
             
         except Exception as e:
             logger.error(f"系统初始化失败: {e}")
@@ -128,7 +128,7 @@ class AdvancedGraphRAGSystem:
         try:
             # 检查Milvus集合是否存在
             if self.index_module.has_collection():
-                print("✅ 发现已存在的知识库，尝试加载...")
+                print("[OK] 发现已存在的知识库，尝试加载...")
                 if self.index_module.load_collection():
                     print("知识库加载成功！")
                     
@@ -146,7 +146,7 @@ class AdvancedGraphRAGSystem:
                     self._initialize_retrievers(chunks)
                     return
                 else:
-                    print("❌ 知识库加载失败，开始重建...")
+                    print("[WARN] 知识库加载失败，开始重建...")
             
             print("未找到已存在的集合，开始构建新的知识库...")
             
@@ -176,7 +176,7 @@ class AdvancedGraphRAGSystem:
             # 显示统计信息
             self._show_knowledge_base_stats()
             
-            print("✅ 知识库构建完成！")
+            print("[OK] 知识库构建完成！")
             
         except Exception as e:
             logger.error(f"知识库构建失败: {e}")
@@ -197,7 +197,7 @@ class AdvancedGraphRAGSystem:
         self.graph_rag_retrieval.initialize()
         
         self.system_ready = True
-        print("✅ 检索引擎初始化完成！")
+        print("[OK] 检索引擎初始化完成！")
     
     def _show_knowledge_base_stats(self):
         """显示知识库统计信息"""
@@ -221,7 +221,7 @@ class AdvancedGraphRAGSystem:
         
         if stats.get('categories'):
             categories = list(stats['categories'].keys())[:10]
-            print(f"   🏷️ 主要分类: {', '.join(categories)}")
+            print(f"   主要分类: {', '.join(categories)}")
     
     def ask_question_with_routing(self, question: str, stream: bool = False, explain_routing: bool = False):
         """
@@ -252,7 +252,7 @@ class AdvancedGraphRAGSystem:
             }
             strategy_icon = strategy_icons.get(analysis.recommended_strategy.value, "❓")
             print(f"{strategy_icon} 使用策略: {analysis.recommended_strategy.value}")
-            print(f"📊 复杂度: {analysis.query_complexity:.2f}, 关系密集度: {analysis.relationship_intensity:.2f}")
+            print(f"复杂度: {analysis.query_complexity:.2f}, 关系密集度: {analysis.relationship_intensity:.2f}")
             
             # 3. 显示检索结果信息
             if relevant_docs:
@@ -271,7 +271,7 @@ class AdvancedGraphRAGSystem:
                 return "抱歉，没有找到相关的烹饪信息。请尝试其他问题。", analysis
             
             # 4. 生成回答
-            print("🎯 智能生成回答...")
+            print("智能生成回答...")
             
             if stream:
                 try:
@@ -281,7 +281,7 @@ class AdvancedGraphRAGSystem:
                     result = "流式输出完成"
                 except Exception as stream_error:
                     logger.error(f"流式输出过程中出现错误: {stream_error}")
-                    print(f"\n⚠️ 流式输出中断，切换到标准模式...")
+                    print("\n[WARN] 流式输出中断，切换到标准模式...")
                     # 使用非流式作为后备
                     result = self.generation_module.generate_adaptive_answer(question, relevant_docs)
             else:
@@ -289,7 +289,7 @@ class AdvancedGraphRAGSystem:
             
             # 5. 性能统计
             end_time = time.time()
-            print(f"\n⏱️ 问答完成，耗时: {end_time - start_time:.2f}秒")
+            print(f"\n问答完成，耗时: {end_time - start_time:.2f}秒")
             
             return result, analysis
             
@@ -304,7 +304,7 @@ class AdvancedGraphRAGSystem:
     def run_interactive(self):
         """运行交互式问答"""
         if not self.system_ready:
-            print("❌ 系统未就绪，请先构建知识库")
+            print("[ERROR] 系统未就绪，请先构建知识库")
             return
             
         print("\n欢迎使用尝尝咸淡RAG烹饪助手！")
@@ -352,7 +352,7 @@ class AdvancedGraphRAGSystem:
                 import traceback
                 traceback.print_exc()
         
-        print("\n👋 感谢使用尝尝咸淡RAG烹饪助手！")
+        print("\n感谢使用尝尝咸淡RAG烹饪助手！")
         self._cleanup()
     
     def _show_system_stats(self):
@@ -380,15 +380,15 @@ class AdvancedGraphRAGSystem:
         print("\n准备重建知识库...")
         
         # 确认操作
-        confirm = input("⚠️  这将删除现有的向量数据并重新构建，是否继续？(y/N): ").strip().lower()
+        confirm = input("[WARN] 这将删除现有的向量数据并重新构建，是否继续？(y/N): ").strip().lower()
         if confirm != 'y':
-            print("❌ 重建操作已取消")
+            print("[ERROR] 重建操作已取消")
             return
         
         try:
             print("删除现有的Milvus集合...")
             if self.index_module.delete_collection():
-                print("✅ 现有集合已删除")
+                print("[OK] 现有集合已删除")
             else:
                 print("删除集合时出现问题，继续重建...")
             
@@ -396,11 +396,11 @@ class AdvancedGraphRAGSystem:
             print("开始重建知识库...")
             self.build_knowledge_base()
             
-            print("✅ 知识库重建完成！")
+            print("[OK] 知识库重建完成！")
             
         except Exception as e:
             logger.error(f"重建知识库失败: {e}")
-            print(f"❌ 重建失败: {e}")
+            print(f"[ERROR] 重建失败: {e}")
             print("建议：请检查Milvus服务状态后重试")
     
     def _cleanup(self):
@@ -435,7 +435,7 @@ def main():
         logger.error(f"系统运行失败: {e}")
         import traceback
         traceback.print_exc()
-        print(f"\n❌ 系统错误: {e}")
+        print(f"\n[ERROR] 系统错误: {e}")
 
 if __name__ == "__main__":
     main() 

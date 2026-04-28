@@ -163,13 +163,13 @@ class GenerationIntegrationModule:
                 
                 if attempt < max_retries - 1:
                     wait_time = (attempt + 1) * 2  # 递增等待时间
-                    print(f"⚠️ 连接中断，{wait_time}秒后重试...")
+                    print(f"[WARN] 连接中断，{wait_time}秒后重试...")
                     time.sleep(wait_time)
                     continue
                 else:
                     # 所有重试都失败，使用非流式作为后备
                     logger.error(f"流式生成完全失败，尝试非流式后备方案")
-                    print("⚠️ 流式生成失败，切换到标准模式...")
+                    print("[WARN] 流式生成失败，切换到标准模式...")
                     
                     try:
                         fallback_response = self.generate_adaptive_answer(question, documents)
